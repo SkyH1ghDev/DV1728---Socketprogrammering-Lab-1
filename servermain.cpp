@@ -11,10 +11,6 @@
 // Alternative, pass CFLAGS=-DDEBUG to make, make CFLAGS=-DDEBUG
 #define DEBUG
 
-
-using namespace std;
-
-
 int main(int argc, char *argv[]){
   
   /*
