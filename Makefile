@@ -1,4 +1,4 @@
-CC_FLAGS = -Wall -I.
+CC_FLAGS = -Wall -g -I.
 LD_FLAGS = -Wall -L./
 
 HELPER_SOURCES = Helpers/Tokenizer.cpp
