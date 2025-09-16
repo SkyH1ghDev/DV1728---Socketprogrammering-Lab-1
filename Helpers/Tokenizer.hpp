@@ -1,26 +1,40 @@
 #pragma once
 
-#include <array>
 #include <string>
-#include <cstdlib>
 
 namespace Helper
 {
+    struct TokenizerData
+    {
+        std::string Protocol = nullptr;
+        std::string Hostname = nullptr;
+        std::string Port = nullptr;
+        std::string Path = nullptr;
+    };
 
     class Tokenizer
     {
-        public:
-            static std::array<std::string, 4> Tokenize(const std::string& pInput);
+    public:
+        TokenizerData Tokenize(std::string_view pInput);
 
-		private:
-			static std::string GetProtocol(const std::string& pInput);
-			static std::string GetHostname(const std::string& pInput);
-			static std::string GetPort(const std::string& pInput);
-			static std::string GetAPI(const std::string& pInput);
+    private:
+        std::string GetProtocol(std::string_view pInput);
 
-        private:
+        std::string GetHostname(std::string_view pInput);
 
-        	std::size_t stringCounter = 0;
+        std::string GetPort(std::string_view pInput);
+
+        std::string GetPath(std::string_view pInput);
+
+    private:
+        struct TokenizerOptions
+        {
+            std::size_t maxProtocolLength = 6;
+            std::size_t maxHostnameLength = 2000;
+            std::size_t maxPortLength = 6;
+            std::size_t maxPathLength = 7;
+        } m_tokenizerOptions;
+
+        std::size_t m_stringCounter = 0;
     };
-
 } // Helper
