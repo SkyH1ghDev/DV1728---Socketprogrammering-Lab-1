@@ -104,7 +104,8 @@ std::variant<calcMessage, calcProtocol> Socket::ReceiveFromBinary(int pFlags, ad
 
     if (bytesReceived < 0)
     {
-        throw std::runtime_error("Error: Timed out. Failed to receive bytes.\n");
+        std::cerr << "ERROR: MESSAGE LOST (TIMEOUT)\n";
+        exit(EXIT_FAILURE);
     }
 
     if (bytesReceived == sizeof(calcMessage))
