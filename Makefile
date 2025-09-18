@@ -6,7 +6,7 @@
 #       \/       \/\/           \/                      \/         \/     \/     \/    \/<___>
 
 
-CC_FLAGS = -Wall -g -I. -std=c++17
+CC_FLAGS = -Wall -g -I. -std=c++20
 LD_FLAGS = -Wall -L./
 
 OBJECT_FILES = Tokenizer.o AddrInfo.o Socket.o
