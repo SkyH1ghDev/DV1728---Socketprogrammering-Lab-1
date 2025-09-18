@@ -51,7 +51,7 @@ Socket::~Socket()
     }
 }
 
-void Socket::SendTo(calcMessage pCalcMessage, int pFlags, const addrinfo* pAddressInformation)
+void Socket::SendToBinary(calcMessage pCalcMessage, int pFlags, const addrinfo* pAddressInformation)
 {
     pCalcMessage.type = htons(pCalcMessage.type);
     pCalcMessage.message = htonl(pCalcMessage.message);
@@ -72,7 +72,7 @@ void Socket::SendTo(calcMessage pCalcMessage, int pFlags, const addrinfo* pAddre
     std::cout << "Bytes sent: " << bytesSent << "\n";
 }
 
-void Socket::SendTo(calcProtocol pCalcProtocol, int pFlags, const addrinfo* pAddressInformation)
+void Socket::SendToBinary(calcProtocol pCalcProtocol, int pFlags, const addrinfo* pAddressInformation)
 {
     pCalcProtocol.type = htons(pCalcProtocol.type);
     pCalcProtocol.major_version = htons(pCalcProtocol.major_version);
@@ -97,7 +97,7 @@ void Socket::SendTo(calcProtocol pCalcProtocol, int pFlags, const addrinfo* pAdd
 }
 
 
-std::variant<calcMessage, calcProtocol> Socket::ReceiveFrom(int pFlags, addrinfo* pAddressInformation)
+std::variant<calcMessage, calcProtocol> Socket::ReceiveFromBinary(int pFlags, addrinfo* pAddressInformation)
 {
     std::vector<std::byte> buffer(sizeof(calcProtocol));
     std::intmax_t bytesReceived = recvfrom(m_socketFileDescriptor, buffer.data(), buffer.size(), pFlags, pAddressInformation->ai_addr, &pAddressInformation->ai_addrlen);

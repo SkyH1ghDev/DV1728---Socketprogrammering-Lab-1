@@ -42,6 +42,8 @@ int main(const int argc, char* argv[])
     Helper::Tokenizer tokenizer;
     Helper::TokenizerData ipData = tokenizer.Tokenize(input);
 
+    std::cout << "Host " << ipData.Hostname << ", and port " << ipData.Port << "\n";
+
     // Check whether port is valid
     if (int port = std::stoi(ipData.Port); port < 1000 or port > 65535)
     {
@@ -99,8 +101,8 @@ int main(const int argc, char* argv[])
     calcMsg.major_version = 1;
     calcMsg.minor_version = 1;
 
-    socket.SendTo(calcMsg, 0, currentAddress);
-    std::variant<calcMessage, calcProtocol> response = socket.ReceiveFrom(0, currentAddress);
+    socket.SendToBinary(calcMsg, 0, currentAddress);
+    std::variant<calcMessage, calcProtocol> response = socket.ReceiveFromBinary(0, currentAddress);
     calcProtocol test = std::get<calcProtocol>(response);
 
     switch (test.arith)
@@ -131,8 +133,8 @@ int main(const int argc, char* argv[])
 
     test.type = 2;
 
-    socket.SendTo(test, 0, currentAddress);
-    response = socket.ReceiveFrom(0, currentAddress);
+    socket.SendToBinary(test, 0, currentAddress);
+    response = socket.ReceiveFromBinary(0, currentAddress);
     calcMessage test2 = std::get<calcMessage>(response);
 
 #ifdef DEBUG

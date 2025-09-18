@@ -19,12 +19,12 @@ namespace Helper
 
     public:
         //void Send(const std::string& buffer, int flags);
-        void SendTo(calcMessage pCalcMessage, int pFlags, const addrinfo* pAddressInformation);
-        void SendTo(calcProtocol pCalcProtocol, int pFlags, const addrinfo* pAddressInformation);
+        void SendToBinary(calcMessage pCalcMessage, int pFlags, const addrinfo* pAddressInformation);
+        void SendToBinary(calcProtocol pCalcProtocol, int pFlags, const addrinfo* pAddressInformation);
         //void SendMessage(const msghdr* msg, int flags);
 
         //void Receive(const std::string& buffer, int flags);
-        std::variant<calcMessage, calcProtocol> ReceiveFrom(int pFlags, addrinfo* pAddressInformation);
+        std::variant<calcMessage, calcProtocol> ReceiveFromBinary(int pFlags, addrinfo* pAddressInformation);
         //void ReceiveMessage();
 
 
