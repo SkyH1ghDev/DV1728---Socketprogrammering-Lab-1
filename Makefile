@@ -6,17 +6,19 @@
 #       \/       \/\/           \/                      \/         \/     \/     \/    \/<___>
 
 
-
 CC_FLAGS = -Wall -g -I.
 LD_FLAGS = -Wall -L./
 
-OBJECT_FILES = Tokenizer.o AddrInfo.o
+OBJECT_FILES = Tokenizer.o AddrInfo.o Socket.o
 
 
 all: libcalc test client server
 
 
 # Custom files
+Socket.o: Helpers/Socket.cpp
+	$(CXX) $(CC_FLAGS) $(CFLAGS) -c -o Socket.o Helpers/Socket.cpp
+
 Tokenizer.o: Helpers/Tokenizer.cpp
 	$(CXX) $(CC_FLAGS) $(CFLAGS) -c -o Tokenizer.o Helpers/Tokenizer.cpp
 

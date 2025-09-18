@@ -1,8 +1,8 @@
-#include <cstdio>
-#include <cstdlib>
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <Helpers/Socket.hpp>
+#include <Helpers/AddrInfo.hpp>
 #include <Helpers/Tokenizer.hpp>
 
 /* You will to add includes here */
@@ -45,7 +45,25 @@ int main(const int argc, char* argv[])
         return 1;
     }
 
-#ifdef DEBUG 
+    Helper::AddrInfo addressInformation = Helper::AddrInfo(ipData.Hostname, ipData.Port, nullptr);
+    Helper::Socket socket;
+    for (addrinfo* addrInfo = addressInformation.GetAddrInfo(); addrInfo != nullptr; addrInfo = addrInfo->ai_next)
+    {
+        try
+        {
+            Helper::Socket testSocket(addrInfo->ai_family, addrInfo->ai_socktype, addrInfo->ai_protocol);
+            socket = testSocket;
+        }
+        catch (std::runtime_error())
+        {
+
+        }
+
+        break;
+    }
+
+
+#ifdef DEBUG
     std::cout
         << "Protocol: " << ipData.Protocol
         << " Host: " << ipData.Hostname

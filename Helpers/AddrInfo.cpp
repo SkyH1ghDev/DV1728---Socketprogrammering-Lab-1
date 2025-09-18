@@ -1,7 +1,18 @@
-//
-// Created by skyh1ghdev on 9/17/25.
-//
+#include "AddrInfo.hpp"
 
-#include "AddrInfo.h"
+using namespace Helper;
 
-using namespace ${NAMESPACE}
+AddrInfo::AddrInfo(const std::string& pHostname, const std::string& pService, const addrinfo* pHints)
+{
+    getaddrinfo(pHostname.c_str(), pService.c_str(), pHints, &m_addressInfo);
+}
+
+AddrInfo::~AddrInfo()
+{
+    freeaddrinfo(m_addressInfo);
+}
+
+addrinfo* AddrInfo::GetAddrInfo() const
+{
+    return m_addressInfo;
+}
