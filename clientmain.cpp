@@ -45,7 +45,7 @@ int main(const int argc, char* argv[])
     std::cout << "Host " << ipData.Hostname << ", and port " << ipData.Port << "\n";
 
     // Check whether port is valid
-    if (int port = std::stoi(ipData.Port); port < 1000 or port > 65535)
+    if (int port = std::stoi(ipData.Port); port < 1 or port > 65535)
     {
         std::cout << "Error: Port is out of server scope.\n";
         if (port > 65535)
