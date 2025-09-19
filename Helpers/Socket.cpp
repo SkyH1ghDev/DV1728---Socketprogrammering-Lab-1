@@ -69,7 +69,7 @@ void Socket::Connect(const addrinfo* pAddressInformation) const
     if (connection < 0)
     {
         std::cerr << "Error: Failed to connect!\n";
-        exit(EXIT_FAILURE);
+        throw std::runtime_error("Testing whether I get here in tests");
     }
 }
 
