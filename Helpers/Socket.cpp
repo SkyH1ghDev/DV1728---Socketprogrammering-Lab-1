@@ -24,13 +24,10 @@ Socket::Socket(int pSocketDomain, int pSocketType, int pProtocol, addrinfo* pCur
 
     Connect(pCurrentAddress);
 
-    if (pSocketType == SOCK_DGRAM)
-    {
-        timeval timeoutTime{};
-        timeoutTime.tv_sec = 2;
-        timeoutTime.tv_usec = 0;
-        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeoutTime, sizeof(timeoutTime));
-    }
+    timeval timeoutTime{};
+    timeoutTime.tv_sec = 2;
+    timeoutTime.tv_usec = 0;
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeoutTime, sizeof(timeoutTime));
 }
 
 Socket::Socket(Socket&& other) noexcept
