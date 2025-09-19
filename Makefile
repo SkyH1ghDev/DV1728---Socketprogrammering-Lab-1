@@ -9,13 +9,16 @@
 CC_FLAGS = -Wall -g -I. -std=c++17
 LD_FLAGS = -Wall -L./
 
-OBJECT_FILES = Tokenizer.o AddrInfo.o Socket.o
+OBJECT_FILES = Tokenizer.o AddrInfo.o Socket.o Misc.o
 
 
 all: libcalc test client server
 
 
 # Custom files
+Misc.o: Helpers/Misc.cpp
+	$(CXX) $(CC_FLAGS) $(CFLAGS) -c -o Misc.o Helpers/Misc.cpp
+
 Socket.o: Helpers/Socket.cpp
 	$(CXX) $(CC_FLAGS) $(CFLAGS) -c -o Socket.o Helpers/Socket.cpp
 

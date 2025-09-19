@@ -1,9 +1,8 @@
+#include <signal.h>
 #include <iostream>
 #include <string>
-#include <cstring>
 #include <sstream>
-#include <vector>
-#include <protocol.h>
+#include <Helpers/Misc.hpp>
 #include <Helpers/Socket.hpp>
 #include <Helpers/AddrInfo.hpp>
 #include <Helpers/Tokenizer.hpp>
@@ -19,6 +18,8 @@
 
 int main(const int argc, char* argv[])
 {
+    // Ignore SIGPIPE because write()/read() are essentially equivalent to send()/recv()
+
     // Check whether an argument has been passed
     if (argc < 2)
     {
@@ -45,15 +46,7 @@ int main(const int argc, char* argv[])
     std::cout << "Host " << ipData.Hostname << ", and port " << ipData.Port << "\n";
 
     // Check whether port is valid
-    if (int port = std::stoi(ipData.Port); port < 1 or port > 65535)
-    {
-        std::cout << "Error: Port is out of server scope.\n";
-        if (port > 65535)
-        {
-            std::cout << "Error: Port is not a valid UDP or TCP port.\n";
-        }
-        return 1;
-    }
+    Helper::Misc::CheckPortValidity(std::stoi(ipData.Port));
 
     // Setup socket hints
     addrinfo socketHints{};
@@ -72,70 +65,18 @@ int main(const int argc, char* argv[])
     // Establish server information
     Helper::AddrInfo serverInformation(ipData.Hostname, ipData.Port, socketHints);
 
-    Helper::Socket socket;
-    addrinfo* currentAddress = nullptr;
-    for (addrinfo* addrInfo = serverInformation.GetAddrInfo(); addrInfo != nullptr; addrInfo = addrInfo->ai_next)
-    {
-        try
-        {
-            Helper::Socket testSocket(addrInfo->ai_family, addrInfo->ai_socktype, addrInfo->ai_protocol);
-            socket = std::move(testSocket);
-            currentAddress = std::move(addrInfo);
-        } catch (std::exception)
-        {
-            continue;
-        }
+    // Create Socket
+    Helper::Socket socket = Helper::Misc::CreateSocket(serverInformation);
 
-        break;
+    if (ipData.Path == "BINARY" || ipData.Path == "binary")
+    {
+        Helper::Misc::PerformBinaryCommunication(socket);
     }
 
-    if (currentAddress == nullptr)
+    if (ipData.Path == "TEXT" || ipData.Path == "text")
     {
-        throw std::runtime_error("Error: Failed to create socket");
+        Helper::Misc::PerformTextCommunication(socket);
     }
-
-    calcMessage calcMsg{};
-    calcMsg.type = 22;
-    calcMsg.message = 0;
-    calcMsg.protocol = 17;
-    calcMsg.major_version = 1;
-    calcMsg.minor_version = 1;
-
-    socket.SendToBinary(calcMsg, 0, currentAddress);
-    std::variant<calcMessage, calcProtocol> response = socket.ReceiveFromBinary(0, currentAddress);
-    calcProtocol test = std::get<calcProtocol>(response);
-
-    switch (test.arith)
-    {
-        case 1:
-            test.inResult = test.inValue1 + test.inValue2;
-            std::cout << "ADD: " << test.inValue1 << " + " << test.inValue2 << " = " << test.inResult << "\n";
-            break;
-
-        case 2:
-            test.inResult = test.inValue1 - test.inValue2;
-            std::cout << "SUB: " << test.inValue1 << " - " << test.inValue2 << " = " << test.inResult << "\n";
-            break;
-
-        case 3:
-            test.inResult = test.inValue1 * test.inValue2;
-            std::cout << "MUL: " << test.inValue1 << " * " << test.inValue2 << " = " << test.inResult << "\n";
-            break;
-
-        case 4:
-            test.inResult = test.inValue1 / test.inValue2;
-            std::cout << "DIV: " << test.inValue1 << " / " << test.inValue2 << " = " << test.inResult << "\n";
-            break;
-
-        default:
-            throw std::runtime_error("Error: Undefined arithmetic operator-value received\n");
-    }
-
-    test.type = 2;
-
-    socket.SendToBinary(test, 0, currentAddress);
-    response = socket.ReceiveFromBinary(0, currentAddress);
-    calcMessage test2 = std::get<calcMessage>(response);
 
 #ifdef DEBUG
     std::cout

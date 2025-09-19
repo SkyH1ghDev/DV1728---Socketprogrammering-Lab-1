@@ -2,6 +2,7 @@
 #include <netdb.h>
 #include <protocol.h>
 #include <variant>
+#include <string>
 
 namespace Helper
 {
@@ -9,28 +10,32 @@ namespace Helper
     {
     public:
         Socket() = default;
-        Socket(Socket&& other) noexcept;
-        Socket& operator=(Socket&& other) noexcept;
+        Socket(int pSocketDomain, int pSocketType, int pProtocol, addrinfo* pCurrentAddress);
         Socket(Socket& other) = delete;
         Socket& operator=(Socket& other) = delete;
-        Socket(int pSocketDomain, int pSocketType, int pProtocol);
+        Socket(Socket&& other) noexcept;
+        Socket& operator=(Socket&& other) noexcept;
 
         ~Socket();
 
     public:
-        //void Send(const std::string& buffer, int flags);
-        void SendToBinary(calcMessage pCalcMessage, int pFlags, const addrinfo* pAddressInformation);
-        void SendToBinary(calcProtocol pCalcProtocol, int pFlags, const addrinfo* pAddressInformation);
-        //void SendMessage(const msghdr* msg, int flags);
+        addrinfo* GetAddressData() const;
 
-        //void Receive(const std::string& buffer, int flags);
-        std::variant<calcMessage, calcProtocol> ReceiveFromBinary(int pFlags, addrinfo* pAddressInformation);
-        //void ReceiveMessage();
+        void Connect(const addrinfo* pAddressInformation) const;
+
+        void SendBinary(calcMessage pCalcMessage, int pFlags) const;
+        void SendBinary(calcProtocol pCalcProtocol, int pFlags) const;
+        void SendText(const std::string& pMessage, int pFlags) const;
+        //void SendText(calcMessage pCalcProtocol, int pFlags) const;
+        //void SendText(calcProtocol pCalcProtocol, int pFlags) const;
+
+        std::variant<calcMessage, calcProtocol> ReceiveBinary(int pFlags) const;
+        std::string ReceiveText(int pFlags)const ;
+
 
 
     private:
         int m_socketFileDescriptor = 0;
-
+        addrinfo* m_currentAddress = nullptr;
     };
-
 }

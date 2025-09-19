@@ -1,5 +1,6 @@
 #include "Socket.hpp"
 #include <sys/socket.h>
+#include <poll.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <cstdint>
@@ -9,7 +10,7 @@
 
 using namespace Helper;
 
-Socket::Socket(int pSocketDomain, int pSocketType, int pProtocol)
+Socket::Socket(int pSocketDomain, int pSocketType, int pProtocol, addrinfo* pCurrentAddress)
 {
     int sockfd = socket(pSocketDomain, pSocketType, pProtocol);
 
@@ -19,16 +20,23 @@ Socket::Socket(int pSocketDomain, int pSocketType, int pProtocol)
     }
 
     m_socketFileDescriptor = sockfd;
+    m_currentAddress = pCurrentAddress;
 
-    timeval timeoutTime{};
-    timeoutTime.tv_sec = 2;
-    timeoutTime.tv_usec = 0;
-    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeoutTime, sizeof(timeoutTime));
+    Connect(pCurrentAddress);
+
+    if (pSocketType == SOCK_DGRAM)
+    {
+        timeval timeoutTime{};
+        timeoutTime.tv_sec = 2;
+        timeoutTime.tv_usec = 0;
+        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeoutTime, sizeof(timeoutTime));
+    }
 }
 
 Socket::Socket(Socket&& other) noexcept
 {
     std::swap(m_socketFileDescriptor, other.m_socketFileDescriptor);
+    std::swap(m_currentAddress, other.m_currentAddress);
 }
 
 Socket& Socket::operator=(Socket&& other) noexcept
@@ -39,6 +47,7 @@ Socket& Socket::operator=(Socket&& other) noexcept
     }
 
     std::swap(m_socketFileDescriptor, other.m_socketFileDescriptor);
+    std::swap(m_currentAddress, other.m_currentAddress);
 
     return *this;
 }
@@ -51,7 +60,23 @@ Socket::~Socket()
     }
 }
 
-void Socket::SendToBinary(calcMessage pCalcMessage, int pFlags, const addrinfo* pAddressInformation)
+addrinfo* Socket::GetAddressData() const
+{
+    return m_currentAddress;
+}
+
+void Socket::Connect(const addrinfo* pAddressInformation) const
+{
+    int connection = connect(m_socketFileDescriptor, pAddressInformation->ai_addr, pAddressInformation->ai_addrlen);
+
+    if (connection < 0)
+    {
+        std::cerr << "Error: Failed to connect!\n";
+        exit(EXIT_FAILURE);
+    }
+}
+
+void Socket::SendBinary(calcMessage pCalcMessage, int pFlags) const
 {
     pCalcMessage.type = htons(pCalcMessage.type);
     pCalcMessage.message = htonl(pCalcMessage.message);
@@ -62,7 +87,7 @@ void Socket::SendToBinary(calcMessage pCalcMessage, int pFlags, const addrinfo* 
     std::vector<std::byte> payload(sizeof pCalcMessage);
     std::memcpy(payload.data(), &pCalcMessage, sizeof pCalcMessage);
 
-    std::intmax_t bytesSent = sendto(m_socketFileDescriptor, payload.data(), payload.size(), pFlags, pAddressInformation->ai_addr, pAddressInformation->ai_addrlen);
+    std::intmax_t bytesSent = send(m_socketFileDescriptor, payload.data(), payload.size(), pFlags);
 
     if (bytesSent < 0)
     {
@@ -72,7 +97,7 @@ void Socket::SendToBinary(calcMessage pCalcMessage, int pFlags, const addrinfo* 
     std::cout << "Bytes sent: " << bytesSent << "\n";
 }
 
-void Socket::SendToBinary(calcProtocol pCalcProtocol, int pFlags, const addrinfo* pAddressInformation)
+void Socket::SendBinary(calcProtocol pCalcProtocol, int pFlags) const
 {
     pCalcProtocol.type = htons(pCalcProtocol.type);
     pCalcProtocol.major_version = htons(pCalcProtocol.major_version);
@@ -86,7 +111,7 @@ void Socket::SendToBinary(calcProtocol pCalcProtocol, int pFlags, const addrinfo
     std::vector<std::byte> payload(sizeof pCalcProtocol);
     std::memcpy(payload.data(), &pCalcProtocol, sizeof pCalcProtocol);
 
-    std::intmax_t bytesSent = sendto(m_socketFileDescriptor, payload.data(), payload.size(), pFlags, pAddressInformation->ai_addr, pAddressInformation->ai_addrlen);
+    std::intmax_t bytesSent = send(m_socketFileDescriptor, payload.data(), payload.size(), pFlags);
 
     if (bytesSent < 0)
     {
@@ -96,11 +121,22 @@ void Socket::SendToBinary(calcProtocol pCalcProtocol, int pFlags, const addrinfo
     std::cout << "Bytes sent: " << bytesSent << "\n";
 }
 
+void Socket::SendText(const std::string& pMessage, int pFlags) const
+{
+    std::intmax_t bytesSent = send(m_socketFileDescriptor, pMessage.data(), pMessage.size(), pFlags);
 
-std::variant<calcMessage, calcProtocol> Socket::ReceiveFromBinary(int pFlags, addrinfo* pAddressInformation)
+    if (bytesSent < 0)
+    {
+        throw std::runtime_error("Error: Failed to send bytes\n");
+    }
+
+    std::cout << "Bytes sent: " << bytesSent << "\n";
+}
+
+std::variant<calcMessage, calcProtocol> Socket::ReceiveBinary(int pFlags) const
 {
     std::vector<std::byte> buffer(sizeof(calcProtocol));
-    std::intmax_t bytesReceived = recvfrom(m_socketFileDescriptor, buffer.data(), buffer.size(), pFlags, pAddressInformation->ai_addr, &pAddressInformation->ai_addrlen);
+    std::intmax_t bytesReceived = recv(m_socketFileDescriptor, buffer.data(), buffer.size(), pFlags);
 
     if (bytesReceived < 0)
     {
@@ -143,4 +179,22 @@ std::variant<calcMessage, calcProtocol> Socket::ReceiveFromBinary(int pFlags, ad
     }
 
     throw std::runtime_error("Error: Wrong packet size or incorrect protocol\n");
+}
+
+std::string Socket::ReceiveText(int pFlags) const
+{
+    std::vector<char> buffer(4096);
+    std::vector<pollfd> pollFileDescriptors =
+    {
+        {m_socketFileDescriptor, POLLIN}
+    };
+
+    poll(pollFileDescriptors.data(), pollFileDescriptors.size(), 2000);
+
+    if (pollFileDescriptors.at(0).revents & POLLIN)
+    {
+        int bytesRead = recv(m_socketFileDescriptor, buffer.data(), buffer.size(), pFlags);
+    }
+
+    return { buffer.data() };
 }
