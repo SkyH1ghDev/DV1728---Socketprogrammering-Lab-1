@@ -116,7 +116,7 @@ void Misc::PerformTextCommunication(const Socket& pSocket)
 
     if (tokens.size() != 3)
     {
-        std::cerr << "Incorrect data received\n";
+        std::cout << "ERROR: Incorrect data received\n";
         exit(EXIT_FAILURE);
     }
 
