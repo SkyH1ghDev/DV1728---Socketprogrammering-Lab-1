@@ -75,7 +75,7 @@ int main(const int argc, char* argv[])
 
     if (ipData.Path == "TEXT" || ipData.Path == "text")
     {
-        Helper::Misc::PerformTextCommunication(socket);
+        //Helper::Misc::PerformTextCommunication(socket);
     }
 
 #ifdef DEBUG
