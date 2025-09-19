@@ -68,8 +68,8 @@ void Socket::Connect(const addrinfo* pAddressInformation) const
 
     if (connection < 0)
     {
-        std::cerr << "Error: Failed to connect!\n";
-        throw std::runtime_error("Testing whether I get here in tests");
+        std::cerr << "ERROR: RESOLVE ISSUE\n";
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -186,6 +186,12 @@ std::string Socket::ReceiveText(int pFlags) const
     if (pollFileDescriptor.revents & POLLIN)
     {
         int bytesRead = recv(m_socketFileDescriptor, buffer.data(), buffer.size(), pFlags);
+
+        if (bytesRead < 0)
+        {
+            std::cout << "ERROR: MESSAGE LOST (TIMEOUT)\n";
+            exit(EXIT_FAILURE);
+        }
     }
 
     return { buffer.data() };

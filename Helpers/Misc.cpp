@@ -102,13 +102,29 @@ void Misc::PerformBinaryCommunication(const Socket& pSocket)
 void Misc::PerformTextCommunication(const Socket& pSocket)
 {
     std::string response = pSocket.ReceiveText(0);
-    pSocket.SendText("TEXT TCP 1.1 OK\n", 0);
-    response = pSocket.ReceiveText(0);
-
     std::vector<std::string> tokens;
     std::string temp;
     std::stringstream ss(response);
 
+    while (getline(ss, temp, '\n'))
+    {
+        tokens.push_back(temp);
+    }
+
+    for (auto token : tokens)
+    {
+        if (&token == &tokens.back())
+        {
+            std::cout << "ERROR: MISSMATCH PROTOCOL\n";
+            exit(EXIT_FAILURE);
+        };
+    }
+
+    pSocket.SendText("TEXT TCP 1.1 OK\n", 0);
+    response = pSocket.ReceiveText(0);
+
+    tokens.clear();
+    ss = std::stringstream(response);
     while (getline(ss, temp, ' '))
     {
         tokens.push_back(temp);
