@@ -52,23 +52,23 @@ int Misc::PerformArithmetic(int pOperand, int pVal1, int pVal2)
     {
         case 1:
             result = pVal1 + pVal2;
-        std::cout << "ADD: " << pVal1 << " + " << pVal2 << " = " << result << "\n";
-        break;
+            std::cout << "ASSIGNMENT: add " << pVal1 << " " << pVal2 << "\n";
+            break;
 
         case 2:
             result = pVal1 - pVal2;
-        std::cout << "SUB: " << pVal1 << " - " << pVal2 << " = " << result << "\n";
-        break;
+            std::cout << "ASSIGNMENT: sub " << pVal1 << " " << pVal2 << "\n";
+            break;
 
         case 3:
             result = pVal1 * pVal2;
-        std::cout << "MUL: " << pVal1 << " * " << pVal2 << " = " << result << "\n";
-        break;
+            std::cout << "ASSIGNMENT: mul " << pVal1 << " " << pVal2 << "\n";
+            break;
 
         case 4:
             result = pVal1 / pVal2;
-        std::cout << "DIV: " << pVal1 << " / " << pVal2 << " = " << result << "\n";
-        break;
+            std::cout << "ASSIGNMENT: div " << pVal1 << " " << pVal2 << "\n";
+            break;
 
         default:
             throw std::runtime_error("Error: Undefined arithmetic operator-value received\n");
@@ -163,5 +163,7 @@ void Misc::PerformTextCommunication(const Socket& pSocket)
         std::cout << "ERROR: Server sent error\n";
         exit(EXIT_FAILURE);
     }
+
+    std::cout << "OK (myresult=" << result << ")\n";
 }
 
