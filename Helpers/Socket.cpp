@@ -181,17 +181,20 @@ std::string Socket::ReceiveText(int pFlags) const
     pollFileDescriptor.fd = m_socketFileDescriptor;
     pollFileDescriptor.events = POLLIN;
 
-    while (poll(&pollFileDescriptor, 1, 2000))
+    int rv = poll(&pollFileDescriptor, 1, 2000);
+    if (rv < 0)
+    {
+        std::cerr << "Error: poll failed\n";
+    }
+    else if (rv == 0)
+    {
+        std::cerr << "ERROR: MESSAGE LOST (TIMEOUT)\n";
+    }
+    else
     {
         if (pollFileDescriptor.revents & POLLIN)
         {
             int bytesRead = recv(m_socketFileDescriptor, buffer.data(), buffer.size(), pFlags);
-
-            if (bytesRead < 0)
-            {
-                std::cout << "ERROR: MESSAGE LOST (TIMEOUT)\n";
-                exit(EXIT_FAILURE);
-            }
         }
     }
 
