@@ -180,15 +180,14 @@ std::variant<calcMessage, calcProtocol> Socket::ReceiveBinary(int pFlags) const
 
 std::string Socket::ReceiveText(int pFlags) const
 {
-    std::vector<char> buffer(4096);
-    std::vector<pollfd> pollFileDescriptors =
-    {
-        {m_socketFileDescriptor, POLLIN}
-    };
+    std::vector<char> buffer(1024);
+    pollfd pollFileDescriptor{};
+    pollFileDescriptor.fd = m_socketFileDescriptor;
+    pollFileDescriptor.events = POLLIN;
 
-    poll(pollFileDescriptors.data(), pollFileDescriptors.size(), 2000);
+    poll(&pollFileDescriptor, 1, 2000);
 
-    if (pollFileDescriptors.at(0).revents & POLLIN)
+    if (pollFileDescriptor.revents & POLLIN)
     {
         int bytesRead = recv(m_socketFileDescriptor, buffer.data(), buffer.size(), pFlags);
     }
