@@ -88,7 +88,8 @@ void Socket::SendBinary(calcMessage pCalcMessage, int pFlags) const
 
     if (bytesSent < 0)
     {
-        throw std::runtime_error("Error: Failed to send bytes\n");
+        std::cerr << "ERROR: Failed to send bytes\n";
+        exit(EXIT_FAILURE);
     }
 
     std::cout << "Bytes sent: " << bytesSent << "\n";
@@ -112,7 +113,8 @@ void Socket::SendBinary(calcProtocol pCalcProtocol, int pFlags) const
 
     if (bytesSent < 0)
     {
-        throw std::runtime_error("Error: Failed to send bytes\n");
+        std::cerr << "ERROR: Failed to send bytes\n";
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -122,19 +124,51 @@ void Socket::SendText(const std::string& pMessage, int pFlags) const
 
     if (bytesSent < 0)
     {
-        throw std::runtime_error("Error: Failed to send bytes\n");
+        std::cerr << "ERROR: Failed to send bytes\n";
+        exit(EXIT_FAILURE);
     }
 }
 
 std::variant<calcMessage, calcProtocol> Socket::ReceiveBinary(int pFlags) const
 {
     std::vector<std::byte> buffer(sizeof(calcProtocol));
-    std::intmax_t bytesReceived = recv(m_socketFileDescriptor, buffer.data(), buffer.size(), pFlags);
+    std::intmax_t bytesReceived;
 
-    if (bytesReceived < 0)
+    // UDP
+    if (m_currentAddress->ai_socktype == SOCK_DGRAM)
     {
-        std::cerr << "ERROR: MESSAGE LOST (TIMEOUT)\n";
-        exit(EXIT_FAILURE);
+        bytesReceived = recv(m_socketFileDescriptor, buffer.data(), buffer.size(), pFlags);
+
+        if (bytesReceived < 0)
+        {
+            std::cerr << "ERROR: MESSAGE LOST (TIMEOUT)\n";
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    if (m_currentAddress->ai_socktype == SOCK_STREAM)
+    {
+        pollfd pollFileDescriptor{};
+        pollFileDescriptor.fd = m_socketFileDescriptor;
+        pollFileDescriptor.events = POLLIN;
+
+        int rv = poll(&pollFileDescriptor, 1, 3000);
+        if (rv < 0)
+        {
+            std::cerr << "Error: poll failed\n";
+            exit(EXIT_FAILURE);
+        }
+        if (rv == 0)
+        {
+            std::cerr << "ERROR: MESSAGE LOST (TIMEOUT)\n";
+            exit(EXIT_FAILURE);
+        }
+
+
+        if (pollFileDescriptor.revents & POLLIN)
+        {
+            bytesReceived = recv(m_socketFileDescriptor, buffer.data(), buffer.size(), pFlags);
+        }
     }
 
     if (bytesReceived == sizeof(calcMessage))
@@ -149,7 +183,8 @@ std::variant<calcMessage, calcProtocol> Socket::ReceiveBinary(int pFlags) const
 
          if (message.message == 2)
          {
-             throw std::runtime_error("Error: Server sent REJECT message\n");
+             std::cerr << "ERROR: Server rejected\n";
+             exit(EXIT_FAILURE);
          }
 
          return message;
@@ -171,27 +206,46 @@ std::variant<calcMessage, calcProtocol> Socket::ReceiveBinary(int pFlags) const
         return response;
     }
 
+
     throw std::runtime_error("Error: Wrong packet size or incorrect protocol\n");
 }
 
 std::string Socket::ReceiveText(int pFlags) const
 {
     std::vector<char> buffer(1024);
-    pollfd pollFileDescriptor{};
-    pollFileDescriptor.fd = m_socketFileDescriptor;
-    pollFileDescriptor.events = POLLIN;
 
-    int rv = poll(&pollFileDescriptor, 1, 2000);
-    if (rv < 0)
+    // UDP
+    if (m_currentAddress->ai_socktype == SOCK_DGRAM)
     {
-        std::cerr << "Error: poll failed\n";
+        std::intmax_t bytesReceived = recv(m_socketFileDescriptor, buffer.data(), buffer.size(), pFlags);
+
+        if (bytesReceived < 0)
+        {
+            std::cerr << "ERROR: MESSAGE LOST (TIMEOUT)\n";
+            exit(EXIT_FAILURE);
+        }
     }
-    else if (rv == 0)
+
+    // TCP
+    if (m_currentAddress->ai_socktype == SOCK_STREAM)
     {
-        std::cerr << "ERROR: MESSAGE LOST (TIMEOUT)\n";
-    }
-    else
-    {
+        pollfd pollFileDescriptor{};
+        pollFileDescriptor.fd = m_socketFileDescriptor;
+        pollFileDescriptor.events = POLLIN;
+
+        int rv = poll(&pollFileDescriptor, 1, 2000);
+        if (rv < 0)
+        {
+            std::cerr << "Error: poll failed\n";
+            exit(EXIT_FAILURE);
+        }
+        if (rv == 0)
+        {
+            std::cerr << "ERROR: MESSAGE LOST (TIMEOUT)\n";
+            exit(EXIT_FAILURE);
+        }
+
+
         if (pollFileDescriptor.revents & POLLIN)
         {
             int bytesRead = recv(m_socketFileDescriptor, buffer.data(), buffer.size(), pFlags);

@@ -87,7 +87,42 @@ void Misc::PerformBinaryCommunication(const Socket& pSocket)
     firstMessage.major_version = 1;
     firstMessage.minor_version = 1;
 
-    pSocket.SendBinary(firstMessage, 0);
+    // UDP
+    if (pSocket.GetAddressData()->ai_socktype == SOCK_DGRAM)
+    {
+        pSocket.SendBinary(firstMessage, 0);
+    }
+
+    // TCP
+    if (pSocket.GetAddressData()->ai_socktype == SOCK_STREAM)
+    {
+        std::string response = pSocket.ReceiveText(0);
+        std::stringstream ss(response);
+        std::vector<std::string> tokens;
+        std::string temp;
+
+        while (getline(ss, temp, '\n'))
+        {
+            tokens.push_back(temp);
+        }
+
+        for (std::string& token : tokens)
+        {
+            if (token == "BINARY TCP 1.1")
+            {
+                break;
+            }
+
+            if (&token == &tokens.back())
+            {
+                std::cout << "ERROR: MISSMATCH PROTOCOL\n";
+                exit(EXIT_FAILURE);
+            };
+        }
+
+        pSocket.SendText("BINARY TCP 1.1 OK\n", 0);
+    }
+
     std::variant<calcMessage, calcProtocol> responseVariant = pSocket.ReceiveBinary(0);
     calcProtocol response = std::get<calcProtocol>(responseVariant);
 
@@ -97,30 +132,58 @@ void Misc::PerformBinaryCommunication(const Socket& pSocket)
     pSocket.SendBinary(response, 0);
     responseVariant = pSocket.ReceiveBinary(0);
     calcMessage test2 = std::get<calcMessage>(responseVariant);
+
+    if (test2.message != 1)
+    {
+        std::cout << "ERROR: Server sent error\n";
+        exit(EXIT_FAILURE);
+    }
+
+    std::cout << "OK (myresult=" << response.inResult << ")\n";
 }
 
 void Misc::PerformTextCommunication(const Socket& pSocket)
 {
-    std::string response = pSocket.ReceiveText(0);
+    std::string response;
     std::vector<std::string> tokens;
     std::string temp;
-    std::stringstream ss(response);
+    std::stringstream ss;
 
-    while (getline(ss, temp, '\n'))
+    // UDP
+
+    if (pSocket.GetAddressData()->ai_socktype == SOCK_DGRAM)
     {
-        tokens.push_back(temp);
+        pSocket.SendText("TEXT UDP 1.1\n", 0);
     }
 
-    for (auto token : tokens)
+    // TCP
+    if (pSocket.GetAddressData()->ai_socktype == SOCK_STREAM)
     {
-        if (&token == &tokens.back())
+        response = pSocket.ReceiveText(0);
+        ss = std::stringstream(response);
+
+        while (getline(ss, temp, '\n'))
         {
-            std::cout << "ERROR: MISSMATCH PROTOCOL\n";
-            exit(EXIT_FAILURE);
-        };
+            tokens.push_back(temp);
+        }
+
+        for (std::string& token : tokens)
+        {
+            if (token == "TEXT TCP 1.1")
+            {
+                break;
+            }
+
+            if (&token == &tokens.back())
+            {
+                std::cout << "ERROR: MISSMATCH PROTOCOL\n";
+                exit(EXIT_FAILURE);
+            };
+        }
+
+        pSocket.SendText("TEXT TCP 1.1 OK\n", 0);
     }
 
-    pSocket.SendText("TEXT TCP 1.1 OK\n", 0);
     response = pSocket.ReceiveText(0);
 
     tokens.clear();
