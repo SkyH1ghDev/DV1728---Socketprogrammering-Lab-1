@@ -78,6 +78,8 @@ int main(const int argc, char* argv[])
         Helper::Misc::PerformTextCommunication(socket);
     }
 
+    exit(EXIT_SUCCESS);
+
 #ifdef DEBUG
     std::cout
             << "Protocol: " << ipData.Protocol
@@ -85,6 +87,4 @@ int main(const int argc, char* argv[])
             << " Port: " << ipData.Port
             << " Path: " << ipData.Path;
 #endif
-
-    return 0;
 }
