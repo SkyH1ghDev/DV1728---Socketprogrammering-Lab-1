@@ -114,8 +114,6 @@ void Socket::SendBinary(calcProtocol pCalcProtocol, int pFlags) const
     {
         throw std::runtime_error("Error: Failed to send bytes\n");
     }
-
-    std::cout << "Bytes sent: " << bytesSent << "\n";
 }
 
 void Socket::SendText(const std::string& pMessage, int pFlags) const
@@ -126,8 +124,6 @@ void Socket::SendText(const std::string& pMessage, int pFlags) const
     {
         throw std::runtime_error("Error: Failed to send bytes\n");
     }
-
-    std::cout << "Bytes sent: " << bytesSent << "\n";
 }
 
 std::variant<calcMessage, calcProtocol> Socket::ReceiveBinary(int pFlags) const

@@ -142,5 +142,10 @@ void Misc::PerformTextCommunication(const Socket& pSocket)
 
     pSocket.SendText(std::to_string(result) + "\n", 0);
     response = pSocket.ReceiveText(0);
+    if (response != "OK\n")
+    {
+        std::cout << "ERROR: Server sent error\n";
+        exit(EXIT_FAILURE);
+    }
 }
 
