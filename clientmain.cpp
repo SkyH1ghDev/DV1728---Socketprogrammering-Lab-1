@@ -11,7 +11,7 @@
 
 // Enable if you want debugging to be printed, see examble below.
 // Alternative, pass CFLAGS=-DDEBUG to make, make CFLAGS=-DDEBUG
-#define DEBUG
+//#define DEBUG
 
 
 // Included to get the support library
@@ -75,7 +75,7 @@ int main(const int argc, char* argv[])
 
     if (ipData.Path == "TEXT" || ipData.Path == "text")
     {
-        //Helper::Misc::PerformTextCommunication(socket);
+        Helper::Misc::PerformTextCommunication(socket);
     }
 
 #ifdef DEBUG

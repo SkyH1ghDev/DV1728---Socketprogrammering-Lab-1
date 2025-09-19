@@ -114,6 +114,12 @@ void Misc::PerformTextCommunication(const Socket& pSocket)
         tokens.push_back(temp);
     }
 
+    if (tokens.size() != 3)
+    {
+        std::cerr << "Incorrect data received\n";
+        exit(EXIT_FAILURE);
+    }
+
     int operand = 0;
     if (tokens.at(0) == "add")
     {
