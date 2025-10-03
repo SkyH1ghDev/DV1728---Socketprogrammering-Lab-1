@@ -234,6 +234,7 @@ std::string Socket::ReceiveText(int pFlags) const
         pollFileDescriptor.events = POLLIN;
 
         int rv = poll(&pollFileDescriptor, 1, 2000);
+
         if (rv < 0)
         {
             std::cerr << "Error: poll failed\n";
@@ -250,6 +251,7 @@ std::string Socket::ReceiveText(int pFlags) const
         {
             int bytesRead = recv(m_socketFileDescriptor, buffer.data(), buffer.size(), pFlags);
         }
+
     }
 
     return { buffer.data() };
